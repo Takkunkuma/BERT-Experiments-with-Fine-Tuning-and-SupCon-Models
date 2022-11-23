@@ -18,6 +18,7 @@ class IntentModel(nn.Module):
     self.target_size = target_size
 
     # task1: add necessary class variables as you wish.
+
     
     # task2: initilize the dropout and classify layers
     self.dropout = nn.Dropout(p=args.drop_rate)
@@ -31,6 +32,11 @@ class IntentModel(nn.Module):
     
     self.encoder.resize_token_embeddings(len(self.tokenizer))  
     # transformer_check
+
+    # setup optimizer and scheduler
+    self.optimizer = AdamW(self.parameters(), lr=args.learning_rate, eps=args.adam_epsilon)
+    self.scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=300, num_training_steps=args.n_epochs*17)
+
 
   def forward(self, inputs, targets):
     """
