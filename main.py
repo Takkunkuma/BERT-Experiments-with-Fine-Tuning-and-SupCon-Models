@@ -114,11 +114,11 @@ def supcon_train(args, model, datasets, tokenizer):
             else: 
               loss = criterion(embeddings, labels)
 
-            loss.backward()
-            model.optimizer.step()  # backprop to update the weights
-            model.scheduler.step()  # Update learning rate schedule
-            model.zero_grad()
             losses += loss.item()
+            model.optimizer.zero_grad()
+            loss.backward()
+            model.optimizer.step()
+            model.scheduler.step()
         
         # run validation every epoch
         run_eval(args, model, datasets, tokenizer, split='validation')
