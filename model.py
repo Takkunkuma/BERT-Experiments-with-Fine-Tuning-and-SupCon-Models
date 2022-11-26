@@ -108,3 +108,5 @@ class SupConModel(IntentModel):
     # task 3: normalize output from dropout and feed to linear head
     outputs = F.normalize(outputs, dim=1)
     outputs = self.head(outputs)
+
+    return outputs

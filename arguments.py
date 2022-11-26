@@ -64,11 +64,5 @@ def params():
     parser.add_argument("--SimCLR", default=False, type=bool, 
                 help="Whether to use SimCLR loss or SupCon Loss")
 
-
-
-
-
-    args.eval_every
-
     args = parser.parse_args()
     return args

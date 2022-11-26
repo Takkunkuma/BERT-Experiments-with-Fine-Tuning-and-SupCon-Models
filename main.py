@@ -101,7 +101,7 @@ def supcon_train(args, model, datasets, tokenizer):
             inputs, labels = prepare_inputs(batch, model)
             embeddings_1 = model(inputs, labels)
             embeddings_2 = model(inputs, labels)
-            print(torch.equal(embeddings_1, embeddings_2))
+
             # concat on dimension 1
             embeddings = torch.cat([embeddings_1.unsqueeze(dim=1), embeddings_2.unsqueeze(dim=1)], dim=1)
 
@@ -110,6 +110,18 @@ def supcon_train(args, model, datasets, tokenizer):
               loss = criterion(embeddings)
             else: 
               loss = criterion(embeddings, labels)
+
+            loss.backward()
+            model.optimizer.step()  # backprop to update the weights
+            model.scheduler.step()  # Update learning rate schedule
+            model.zero_grad()
+            losses += loss.item()
+        
+        # run validation every epoch
+        run_eval(args, model, datasets, tokenizer, split='validation')
+        print('epoch', epoch_count, '| losses:', losses)
+    
+
             
 
 if __name__ == "__main__":
