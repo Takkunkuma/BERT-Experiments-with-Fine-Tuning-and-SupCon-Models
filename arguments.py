@@ -57,5 +57,18 @@ def params():
     parser.add_argument("--max-len", default=20, type=int,
                 help="maximum sequence length to look back")
 
+
+    # Self added
+    parser.add_argument("--eval-every", default=172, type=int,
+                help="Evluate on validation set every x steps")
+    parser.add_argument("--SimCLR", default=False, type=bool, 
+                help="Whether to use SimCLR loss or SupCon Loss")
+
+
+
+
+
+    args.eval_every
+
     args = parser.parse_args()
     return args

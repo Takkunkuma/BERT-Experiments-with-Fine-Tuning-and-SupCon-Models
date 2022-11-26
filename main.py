@@ -39,19 +39,16 @@ def baseline_train(args, model, datasets, tokenizer):
             model.scheduler.step()  # Update learning rate schedule
             model.zero_grad()
             losses += loss.item()
-    
         run_eval(args, model, datasets, tokenizer, split='validation')
         print('epoch', epoch_count, '| losses:', losses)
   
 def custom_train(args, model, datasets, tokenizer):
     criterion = nn.CrossEntropyLoss()  # combines LogSoftmax() and NLLLoss()
-    # task1: setup train dataloader
-    train_dataloader = get_dataloader(args, datasets['train'], split='train')
 
-    # task2: setup model's optimizer_scheduler if you have
-      
+    train_dataloader = get_dataloader(args, datasets['train'], split='train')
+    
     # task3: write a training loop
-    for epoch in range(args.n_epochs):
+    for epoch_count in range(args.n_epochs):
         losses = 0
         model.train()
 
@@ -61,7 +58,15 @@ def custom_train(args, model, datasets, tokenizer):
             loss = criterion(logits, labels)
             loss.backward()
 
-            model.optimizer.step()
+            model.optimizer.step()  # backprop to update the weights
+            model.scheduler.step()  # Update learning rate schedule
+            model.zero_grad()
+            losses += loss.item()
+            # run validation every n batches
+            if step % args.eval_every == 0:
+                run_eval(args, model, datasets, tokenizer, split='validation')
+        print('epoch', epoch_count, '| losses:', losses)
+        
 
 def run_eval(args, model, datasets, tokenizer, split='validation'):
     model.eval()
@@ -82,10 +87,30 @@ def supcon_train(args, model, datasets, tokenizer):
     criterion = SupConLoss(temperature=args.temperature)
 
     # task1: load training split of the dataset
+    train_dataloader = get_dataloader(args, datasets['train'], split='train')
     
     # task2: setup optimizer_scheduler in your model
+    # already done in model.py
 
     # task3: write a training loop for SupConLoss function 
+    for epoch_count in range(args.n_epochs):
+        losses = 0
+        model.train()
+
+        for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
+            inputs, labels = prepare_inputs(batch, model)
+            embeddings_1 = model(inputs, labels)
+            embeddings_2 = model(inputs, labels)
+            print(torch.equal(embeddings_1, embeddings_2))
+            # concat on dimension 1
+            embeddings = torch.cat([embeddings_1.unsqueeze(dim=1), embeddings_2.unsqueeze(dim=1)], dim=1)
+
+            # use SimClR or SupCon based on arguments
+            if args.SimCLR:
+              loss = criterion(embeddings)
+            else: 
+              loss = criterion(embeddings, labels)
+            
 
 if __name__ == "__main__":
   args = params()
