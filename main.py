@@ -101,9 +101,10 @@ def supcon_train(args, model, datasets, tokenizer):
             inputs, labels = prepare_inputs(batch, model)
             inputs = {k: torch.cat([v, v], dim=0) for k, v in inputs.items()}
             embeddings = model(inputs, labels) # should be 2n x d
+            bsz = labels.shape[0]
 
             # split the embeddings into two groups
-            e1, e2 = torch.split(embeddings, [args.batch_size, args.batch_size], dim=0)
+            e1, e2 = torch.split(embeddings, [bsz, bsz], dim=0)
 
             embeddings = torch.cat([e1.unsqueeze(1), e2.unsqueeze(1)], dim=1)
             
