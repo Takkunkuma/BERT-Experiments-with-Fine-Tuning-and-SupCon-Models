@@ -99,12 +99,14 @@ def supcon_train(args, model, datasets, tokenizer):
 
         for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
             inputs, labels = prepare_inputs(batch, model)
-            embeddings_1 = model(inputs, labels)
-            embeddings_2 = model(inputs, labels)
+            inputs = {k: torch.cat([v, v], dim=0) for k, v in inputs.items()}
+            embeddings = model(inputs, labels) # should be 2n x d
 
-            # concat on dimension 1
-            embeddings = torch.cat([embeddings_1.unsqueeze(dim=1), embeddings_2.unsqueeze(dim=1)], dim=1)
+            # split the embeddings into two groups
+            e1, e2 = torch.split(embeddings, [args.batch_size, args.batch_size], dim=0)
 
+            embeddings = torch.cat([e1.unsqueeze(1), e2.unsqueeze(1)], dim=1)
+            
             # use SimClR or SupCon based on arguments
             if args.SimCLR:
               loss = criterion(embeddings)
