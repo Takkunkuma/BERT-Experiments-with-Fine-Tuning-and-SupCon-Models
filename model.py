@@ -85,7 +85,7 @@ class SupConModel(IntentModel):
     super().__init__(args, tokenizer, target_size)
 
     # task1: initialize a linear head layer
-    self.head = nn.Linear(args.embed_dim, target_size)
+    self.head = nn.Linear(args.embed_dim, feat_dim)
  
   def forward(self, inputs, targets):
 
@@ -106,7 +106,8 @@ class SupConModel(IntentModel):
     outputs = self.dropout(outputs)
 
     # task 3: normalize output from dropout and feed to linear head
-    outputs = F.normalize(outputs, dim=1)
     outputs = self.head(outputs)
+    outputs = F.normalize(outputs, dim=1)
+    
 
     return outputs

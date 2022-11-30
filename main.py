@@ -2,7 +2,9 @@ import os, sys, pdb
 import numpy as np
 import random
 import torch
-
+import umap
+import umap.plot
+print('=====UMAP IMPORTED=====')
 import math
 
 from tqdm import tqdm as progress_bar
@@ -99,14 +101,10 @@ def supcon_train(args, model, datasets, tokenizer):
 
         for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
             inputs, labels = prepare_inputs(batch, model)
-            inputs = {k: torch.cat([v, v], dim=0) for k, v in inputs.items()}
-            embeddings = model(inputs, labels) # should be 2n x d
-            bsz = labels.shape[0]
+            embeddings_1 = model(inputs, labels) # should be 2n x d
+            embeddings_2 = model(inputs, labels)
 
-            # split the embeddings into two groups
-            e1, e2 = torch.split(embeddings, [bsz, bsz], dim=0)
-
-            embeddings = torch.cat([e1.unsqueeze(1), e2.unsqueeze(1)], dim=1)
+            embeddings = torch.cat([embeddings_1.unsqueeze(1), embeddings_2.unsqueeze(1)], dim=1)
             
             # use SimClR or SupCon based on arguments
             if args.SimCLR:
@@ -123,7 +121,57 @@ def supcon_train(args, model, datasets, tokenizer):
         # run validation every epoch
         run_eval(args, model, datasets, tokenizer, split='validation')
         print('epoch', epoch_count, '| losses:', losses)
+    data = []
+    classes = []
+    count = 0
+    print("=====On Line 126=====")
+    for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
+        inputs, labels = prepare_inputs(batch, model)
+        idx = [labels < 10][0].detach().to('cpu').numpy()
+        #print("=====PREPARED INPUTS=====")
+        embeds = model(inputs, labels)
+        for l,e,i in zip(labels, embeds, idx):
+            #print("=====ZIPPING RIGHT NOW=====")
+            if (i == True):
+                data.append(e.detach().to('cpu').numpy())
+                classes.append(l.detach().to('cpu').numpy())
+                
+                
+#     dataloader = get_dataloader(args, datasets['validation'], 'validation')
+#     for step, batch in progress_bar(enumerate(dataloader), total=len(dataloader)):
+#         inputs, labels = prepare_inputs(batch, model)
+#         idx = [labels < 10][0].detach().to('cpu').numpy()
+#         #print("=====PREPARED INPUTS=====")
+#         embeds = model(inputs, labels)
+#         for l,e,i in zip(labels, embeds, idx):
+#             #print("=====ZIPPING RIGHT NOW=====")
+#             if (i == True):
+#                 data.append(e.detach().to('cpu').numpy())
+#                 classes.append(l.detach().to('cpu').numpy())
     
+    
+#     dataloader = get_dataloader(args, datasets['test'], 'test')
+#     for step, batch in progress_bar(enumerate(dataloader), total=len(dataloader)):
+#         inputs, labels = prepare_inputs(batch, model)
+#         idx = [labels < 10][0].detach().to('cpu').numpy()
+#         #print("=====PREPARED INPUTS=====")
+#         embeds = model(inputs, labels)
+#         for l,e,i in zip(labels, embeds, idx):
+#             #print("=====ZIPPING RIGHT NOW=====")
+#             if (i == True):
+#                 data.append(e.detach().to('cpu').numpy())
+#                 classes.append(l.detach().to('cpu').numpy())
+                
+    embeddings = np.stack(data) #2D of total N X feat_dim
+    labels = np.stack(classes)
+    #transform tensor to numpy
+#     embeddings = embeddings.detach().to('cpu').numpy()
+#     labels = labels.detach().to('cpu').numpy()
+
+    mapper = umap.UMAP().fit(embeddings)
+    image = umap.plot.points(mapper, labels=labels)
+    figure = image.get_figure()
+    figure.savefig("produced_plot")
 
             
 
