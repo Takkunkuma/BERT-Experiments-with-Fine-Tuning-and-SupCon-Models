@@ -72,6 +72,7 @@ def custom_train(args, model, datasets, tokenizer):
                 if len(val_accs) > 1 and val_acc < val_accs[-1]:
                     print('early stopping')
                     return
+                val_accs.append(val_acc)
         print('epoch', epoch_count, '| losses:', losses)
         
 
