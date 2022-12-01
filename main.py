@@ -101,7 +101,7 @@ def supcon_train(args, model, datasets, tokenizer):
         criterion = SupConLoss(temperature=args.temperature)
 
     # task1: load training split of the dataset
-    train_dataloader = get_dataloader(args, datasets['train'], split='train')
+    train_dataloader = get_dataloader(args, datasets['test'], split='test')
     
     # task2: setup optimizer_scheduler in your model
     # already done in model.py
