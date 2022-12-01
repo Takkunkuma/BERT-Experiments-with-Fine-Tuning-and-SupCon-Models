@@ -59,7 +59,7 @@ def params():
 
 
     # Self added
-    parser.add_argument("early-stop", default=False, type=bool,
+    parser.add_argument("--early-stop", default=False, type=bool,
                 help="Whether to use early stop")
     parser.add_argument("--eval-every", default=172, type=int,
                 help="Evluate on validation set every x steps")

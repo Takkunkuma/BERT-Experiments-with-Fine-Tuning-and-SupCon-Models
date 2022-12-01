@@ -66,7 +66,7 @@ def custom_train(args, model, datasets, tokenizer):
             model.zero_grad()
             losses += loss.item()
             # run validation every n batches
-            if step % args.eval_every == 0:
+            if args.early_stop and step % args.eval_every == 0:
                 val_acc = run_eval(args, model, datasets, tokenizer, split='validation')
                 # early stopping if acc decrease
                 if len(val_accs) > 1 and val_acc < val_accs[-1]:
