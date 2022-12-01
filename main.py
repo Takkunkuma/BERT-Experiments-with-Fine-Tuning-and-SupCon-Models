@@ -73,6 +73,7 @@ def custom_train(args, model, datasets, tokenizer):
                     print('early stopping')
                     return
                 val_accs.append(val_acc)
+                model.train()
         print('epoch', epoch_count, '| losses:', losses)
         
 

@@ -65,6 +65,8 @@ def params():
                 help="Whether to use SimCLR loss or SupCon Loss")
     parser.add_argument("--CrossCluster", default=False, type=bool,
                 help="Decides if cluster is done with loss.py or crossentropyloss")
+    parser.add_argument("--warmup", default=0, type=int,
+                help="number of warmup steps")
     
     args = parser.parse_args()
     return args
