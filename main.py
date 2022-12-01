@@ -85,8 +85,11 @@ def run_eval(args, model, datasets, tokenizer, split='validation'):
     print(f'{split} acc:', acc/len(datasets[split]), f'|dataset split {split} size:', len(datasets[split]))
 
 def supcon_train(args, model, datasets, tokenizer):
-    from loss import SupConLoss
-    criterion = SupConLoss(temperature=args.temperature)
+    if args.CrossCluster:
+        criterion = nn.CrossEntropyLoss()
+    else:
+        from loss import SupConLoss
+        criterion = SupConLoss(temperature=args.temperature)
 
     # task1: load training split of the dataset
     train_dataloader = get_dataloader(args, datasets['train'], split='train')
@@ -101,16 +104,22 @@ def supcon_train(args, model, datasets, tokenizer):
 
         for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
             inputs, labels = prepare_inputs(batch, model)
-            embeddings_1 = model(inputs, labels) # should be 2n x d
-            embeddings_2 = model(inputs, labels)
-
-            embeddings = torch.cat([embeddings_1.unsqueeze(1), embeddings_2.unsqueeze(1)], dim=1)
             
-            # use SimClR or SupCon based on arguments
-            if args.SimCLR:
-              loss = criterion(embeddings)
-            else: 
-              loss = criterion(embeddings, labels)
+            if args.CrossCluster == False: 
+                embeddings_1 = model(inputs, labels) # should be 2n x d
+                embeddings_2 = model(inputs, labels)
+                embeddings = torch.cat([embeddings_1.unsqueeze(1), embeddings_2.unsqueeze(1)], dim=1)
+                # use SimClR or SupCon based on arguments
+                if args.SimCLR:
+                    #print("=====Running SimCLR Loss=====")
+                    loss = criterion(embeddings)
+                else:
+                    #print("=====Running SupCon Loss=====")
+                    loss = criterion(embeddings, labels)
+            else:
+                #print("=====Running CrossEntropy Loss=====")
+                embeddings = model(inputs, labels)
+                loss = criterion(embeddings, labels)
 
             losses += loss.item()
             model.optimizer.zero_grad()
@@ -123,8 +132,6 @@ def supcon_train(args, model, datasets, tokenizer):
         print('epoch', epoch_count, '| losses:', losses)
     data = []
     classes = []
-    count = 0
-    print("=====On Line 126=====")
     for step, batch in progress_bar(enumerate(train_dataloader), total=len(train_dataloader)):
         inputs, labels = prepare_inputs(batch, model)
         idx = [labels < 10][0].detach().to('cpu').numpy()
@@ -135,7 +142,6 @@ def supcon_train(args, model, datasets, tokenizer):
             if (i == True):
                 data.append(e.detach().to('cpu').numpy())
                 classes.append(l.detach().to('cpu').numpy())
-                
                 
 #     dataloader = get_dataloader(args, datasets['validation'], 'validation')
 #     for step, batch in progress_bar(enumerate(dataloader), total=len(dataloader)):
@@ -171,8 +177,12 @@ def supcon_train(args, model, datasets, tokenizer):
     mapper = umap.UMAP().fit(embeddings)
     image = umap.plot.points(mapper, labels=labels)
     figure = image.get_figure()
-    figure.savefig("produced_plot")
-
+    if args.CrossCluster:
+        figure.savefig("produced_plot_crossentropy")
+    elif args.SimCLR:
+        figure.savefig("produced_plot_SimCLR")
+    else:
+        figure.savefig("produced_plot_supcon")
             
 
 if __name__ == "__main__":

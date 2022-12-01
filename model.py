@@ -35,7 +35,7 @@ class IntentModel(nn.Module):
 
     # setup optimizer and scheduler
     self.optimizer = AdamW(self.parameters(), lr=args.learning_rate, eps=args.adam_epsilon)
-    self.scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=300, num_training_steps=args.n_epochs*17)
+    self.scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=1000, num_training_steps=args.n_epochs*17)
 
 
   def forward(self, inputs, targets):
@@ -104,10 +104,11 @@ class SupConModel(IntentModel):
     # task 2: take last hidden state's cls token of encoder and feed to drop out
     outputs = outputs['last_hidden_state'][:, 0, :]
     outputs = self.dropout(outputs)
-
+    # print(f"outputs: {outputs.size()}")
     # task 3: normalize output from dropout and feed to linear head
     outputs = self.head(outputs)
+    # print(f"head: {outputs.size()}")
     outputs = F.normalize(outputs, dim=1)
-    
+    # print(f"normalize: {outputs.size()}")
 
     return outputs

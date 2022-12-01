@@ -63,6 +63,8 @@ def params():
                 help="Evluate on validation set every x steps")
     parser.add_argument("--SimCLR", default=False, type=bool, 
                 help="Whether to use SimCLR loss or SupCon Loss")
-
+    parser.add_argument("--CrossCluster", default=False, type=bool,
+                help="Decides if cluster is done with loss.py or crossentropyloss")
+    
     args = parser.parse_args()
     return args
